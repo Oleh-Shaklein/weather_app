@@ -9,7 +9,7 @@ class WeatherModel {
   final double feelsLike;
   final double windSpeed;
   final int pressure;
-  final int timezoneOffset; // Add this
+  final int timezoneOffset;
 
   WeatherModel({
     required this.city,
@@ -37,7 +37,7 @@ class WeatherModel {
       feelsLike: (json['main']['feels_like'] ?? 0).toDouble(),
       windSpeed: (json['wind']['speed'] ?? 0).toDouble(),
       pressure: json['main']['pressure'] ?? 0,
-      timezoneOffset: json['timezone'] ?? 0, // Get timezone from API
+      timezoneOffset: json['timezone'] ?? 0,
     );
   }
 }
@@ -82,13 +82,12 @@ class ForecastDay {
     );
   }
 
-  /// Compare temperature with another day
+  /// порівняння температури з іншим днем
   int getTemperatureChange(ForecastDay? previousDay) {
     if (previousDay == null) return 0;
     return (temperature - previousDay.temperature).toInt();
   }
 
-  /// Get weather description with probability - SIMPLIFIED (no rain indicator)
   String getWeatherDescriptionWithProbability() {
     if (cloudiness > 70) {
       return 'Cloudy';

@@ -1,47 +1,46 @@
 import 'package:flutter/material.dart';
 
 class WeatherTimeHelper {
-  /// Get background gradient colors based on time of day and timezone offset
   static List<Color> getGradientColorsByTime(
       DateTime dateTime, {
         int timezoneOffset = 0,
       }) {
-    // Adjust time by timezone offset
+    /// перевірка по часовим поясам
     final adjustedTime = dateTime.add(Duration(seconds: timezoneOffset));
     final hour = adjustedTime.hour;
 
-    // Night: 20:00 - 5:59 (dark purple gradient)
+    /// ніч 20.00 до 5.59
     if (hour >= 20 || hour < 6) {
       return [
-        const Color(0xFF1a0033), // Dark purple
+        const Color(0xFF1a0033),
         const Color(0xFF2d0052),
       ];
     }
 
-    // Evening/Sunset: 18:00 - 19:59 (orange gradient)
+    /// вечір-захід сонця - 18.00 до 19.59
     if (hour >= 18 && hour < 20) {
       return [
-        const Color(0xFFFF8C42), // Light orange
+        const Color(0xFFFF8C42),
         const Color(0xFFFFB347),
       ];
     }
 
-    // Morning: 5:59 - 8:00 (soft orange to blue)
+    /// світанок-ранок - 5.59 8.00
     if (hour >= 6 && hour < 8) {
       return [
-        const Color(0xFFFF9E64), // Soft orange
-        const Color(0xFF87CEEB), // Sky blue
+        const Color(0xFFFF9E64),
+        const Color(0xFF87CEEB),
       ];
     }
 
-    // Day: 8:00 - 17:59 (blue gradient)
+    /// день - з 8.00 до 17.59
     return [
-      const Color(0xFF1E90FF), // Dodger blue
-      const Color(0xFF87CEEB), // Sky blue
+      const Color(0xFF1E90FF),
+      const Color(0xFF87CEEB),
     ];
   }
 
-  /// Get time period string
+  /// перевірка дня
   static String getTimePeriod(DateTime dateTime, {int timezoneOffset = 0}) {
     final adjustedTime = dateTime.add(Duration(seconds: timezoneOffset));
     final hour = adjustedTime.hour;
@@ -52,7 +51,7 @@ class WeatherTimeHelper {
     return 'day';
   }
 
-  /// Check if it's sunset time (+-1 hour)
+  /// чи захід сонця
   static bool isSunsetTime(DateTime dateTime, {int timezoneOffset = 0}) {
     final adjustedTime = dateTime.add(Duration(seconds: timezoneOffset));
     final hour = adjustedTime.hour;

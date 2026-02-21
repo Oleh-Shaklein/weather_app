@@ -51,7 +51,7 @@ class LocalizationService {
       'humidity_icon': '💧',
     },
   };
-
+///зазвичай для цього використовував json для перебору, цьго разу попробував по іншому. ніби вийшло
   static String translate(String key, String language) {
     return _translations[language]?[key] ?? _translations['en']?[key] ?? key;
   }

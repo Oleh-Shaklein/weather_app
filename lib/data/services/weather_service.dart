@@ -7,7 +7,6 @@ class WeatherService {
   static const String baseUrl = 'https://api.openweathermap.org/data/2.5';
   static const String apiKey = '9e7b4ee3bb69c21547975d5d859a6395';
 
-  /// Get weather by city name
   Future<WeatherModel> getWeatherByCity(String city) async {
     try {
       final url = Uri.parse(
@@ -39,7 +38,6 @@ class WeatherService {
     }
   }
 
-  /// Get weather by coordinates
   Future<WeatherModel> getWeatherByCoordinates(
       double latitude, double longitude) async {
     try {

@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen>
                 const Text(
                   'Made by Shaklein Oleh',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     color: Colors.white70,
                     fontWeight: FontWeight.w500,
                   ),

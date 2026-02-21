@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/city_search_widget.dart';
 import '../widgets/current_weather_widget.dart';
 import '../widgets/forecast_list_widget.dart';
-import '../../data/models/weather_model.dart';
-import '../../data/services/weather_service.dart';
-import '../../data/services/settings_service.dart';
-import '../../data/services/localization_service.dart';
+import '../widgets/saved_cities_widget.dart';
+import '../widgets/offline_indicator_widget.dart';
+import '../../providers/weather_provider.dart';
+import '../../providers/connectivity_provider.dart';
 import '../../utils/weather_time_helper.dart';
 import 'settings_screen.dart';
+///примітка: цього разу я обширно дав усьому терміни/назву файлів, зазвичай в мене спрощені назви типу wtr_pr чи cr_wtr
 
 class MainWeatherScreen extends StatefulWidget {
   const MainWeatherScreen({Key? key}) : super(key: key);
@@ -17,41 +19,21 @@ class MainWeatherScreen extends StatefulWidget {
 }
 
 class _MainWeatherScreenState extends State<MainWeatherScreen> {
-  String _selectedCity = 'London';
-  WeatherModel? _currentWeather;
-  List<ForecastDay> _forecastList = [];
-  final WeatherService _weatherService = WeatherService();
-  final SettingsService _settingsService = SettingsService();
-  bool _isLoading = false;
-  String? _errorMessage;
-  String _language = 'en';
-  String _temperatureUnit = 'C';
-  bool _enableTimeGradient = true;
   late List<Color> _currentGradientColors;
 
   @override
   void initState() {
     super.initState();
-    // Initialize gradient colors first
     _currentGradientColors = [Colors.blue[700]!, Colors.blue[300]!];
-    _initializeSettings();
-  }
-
-  void _initializeSettings() async {
-    await _settingsService.init();
-    setState(() {
-      _language = _settingsService.getLanguage();
-      _temperatureUnit = _settingsService.getTemperatureUnit();
-      _enableTimeGradient = _settingsService.isTimeGradientEnabled();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WeatherProvider>().init();
     });
-    _loadWeatherData();
-    _loadUserLocation();
   }
 
-  void _updateGradientColors() {
-    if (_enableTimeGradient && _currentWeather != null) {
-      // Use timezone offset from current weather if available
-      final timezoneOffset = _currentWeather!.timezoneOffset;
+  void _updateGradientColors(WeatherProvider weatherProvider) {
+    if (weatherProvider.enableTimeGradient &&
+        weatherProvider.currentWeather != null) {
+      final timezoneOffset = weatherProvider.currentWeather!.timezoneOffset;
       _currentGradientColors = WeatherTimeHelper.getGradientColorsByTime(
         DateTime.now(),
         timezoneOffset: timezoneOffset,
@@ -61,161 +43,129 @@ class _MainWeatherScreenState extends State<MainWeatherScreen> {
     }
   }
 
-  void _loadUserLocation() async {
-    try {
-      final position = await _weatherService.getCurrentLocation();
-      print('User location: ${position.latitude}, ${position.longitude}');
-    } catch (e) {
-      print('Location error: $e');
-    }
-  }
-
-  void _loadWeatherData() {
-    _loadWeatherByCity(_selectedCity);
-  }
-
-  void _loadWeatherByCity(String city) async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final weather = await _weatherService.getWeatherByCity(city);
-      final forecast = await _weatherService.getForecast(city);
-
-      setState(() {
-        _currentWeather = weather;
-        _forecastList = forecast;
-        _selectedCity = city;
-        _isLoading = false;
-        _updateGradientColors();
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _onCityChanged(String newCity) {
-    if (newCity.isNotEmpty) {
-      _loadWeatherByCity(newCity);
-    }
-  }
-
-  void _openSettings() {
+  void _openSettings(BuildContext context, WeatherProvider weatherProvider) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => SettingsScreen(
-          currentLanguage: _language,
-          currentTemperatureUnit: _temperatureUnit,
-          timeGradientEnabled: _enableTimeGradient,
+          currentLanguage: weatherProvider.language,
+          currentTemperatureUnit: weatherProvider.temperatureUnit,
+          timeGradientEnabled: weatherProvider.enableTimeGradient,
           onLanguageChanged: (language) async {
-            await _settingsService.setLanguage(language);
-            setState(() {
-              _language = language;
-            });
+            await weatherProvider.setLanguage(language);
           },
           onTemperatureUnitChanged: (unit) async {
-            await _settingsService.setTemperatureUnit(unit);
-            setState(() {
-              _temperatureUnit = unit;
-            });
+            await weatherProvider.setTemperatureUnit(unit);
           },
           onTimeGradientChanged: (enabled) async {
-            await _settingsService.setTimeGradientEnabled(enabled);
+            await weatherProvider.setTimeGradient(enabled);
             setState(() {
-              _enableTimeGradient = enabled;
-              _updateGradientColors();
+              _updateGradientColors(weatherProvider);
             });
           },
         ),
       ),
     ).then((_) {
-      // Rebuild when returning from settings
       setState(() {
-        _language = _settingsService.getLanguage();
-        _temperatureUnit = _settingsService.getTemperatureUnit();
-        _enableTimeGradient = _settingsService.isTimeGradientEnabled();
-        _updateGradientColors();
+        _updateGradientColors(weatherProvider);
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: _currentGradientColors,
-          ),
-        ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          )
-              : _errorMessage != null
-              ? _buildErrorWidget()
-              : _currentWeather == null
-              ? const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          )
-              : Column(
-            children: [
-              _buildTopBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      CurrentWeatherWidget(
-                        weather: _currentWeather!,
-                        temperatureUnit: _temperatureUnit,
-                        language: _language,
-                      ),
-                      const SizedBox(height: 32),
-                      if (_forecastList.isNotEmpty)
-                        ForecastListWidget(
-                          forecast: _forecastList,
-                          temperatureUnit: _temperatureUnit,
-                          language: _language,
-                        ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
+    return Consumer2<WeatherProvider, ConnectivityProvider>(
+      builder: (context, weatherProvider, connectivityProvider, _) {
+        _updateGradientColors(weatherProvider);
+
+        return Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: _currentGradientColors,
               ),
-            ],
+            ),
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  if (weatherProvider.isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  else if (weatherProvider.errorMessage != null)
+                    _buildErrorWidget(context, weatherProvider)
+                  else if (weatherProvider.currentWeather == null)
+                      const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    else
+                      Column(
+                        children: [
+                          _buildTopBar(context, weatherProvider),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  CurrentWeatherWidget(
+                                    weather: weatherProvider.currentWeather!,
+                                    temperatureUnit:
+                                    weatherProvider.temperatureUnit,
+                                    language: weatherProvider.language,
+                                  ),
+                                  // Saved Cities Widget
+                                  if (weatherProvider.savedCities.isNotEmpty)
+                                    const SavedCitiesWidget(),
+                                  const SizedBox(height: 32),
+                                  if (weatherProvider.forecastList.isNotEmpty)
+                                    ForecastListWidget(
+                                      forecast: weatherProvider.forecastList,
+                                      temperatureUnit:
+                                      weatherProvider.temperatureUnit,
+                                      language: weatherProvider.language,
+                                    ),
+                                  const SizedBox(height: 24),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  /// перевірка офлайну
+                  if (!connectivityProvider.isOnline)
+                    const OfflineIndicatorWidget(),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context, WeatherProvider weatherProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           Expanded(
-            child: CitySearchWidget(onCityChanged: _onCityChanged),
+            child: CitySearchWidget(
+              onCityChanged: (city) {
+                weatherProvider.loadWeatherByCity(city);
+              },
+            ),
           ),
           const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white, size: 28),
-            onPressed: _openSettings,
+            onPressed: () => _openSettings(context, weatherProvider),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(BuildContext context, WeatherProvider weatherProvider) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -229,7 +179,7 @@ class _MainWeatherScreenState extends State<MainWeatherScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              LocalizationService.translate('error', _language),
+              'Error',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -238,22 +188,23 @@ class _MainWeatherScreenState extends State<MainWeatherScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'Unknown error occurred',
+              weatherProvider.errorMessage ?? 'Unknown error occurred',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _loadWeatherData,
+              onPressed: () =>
+                  weatherProvider.loadWeatherByCity(weatherProvider.selectedCity),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
               ),
-              child: Text(
-                LocalizationService.translate('retry', _language),
-                style: const TextStyle(color: Colors.blue),
+              child: const Text(
+                'Retry',
+                style: TextStyle(color: Colors.blue),
               ),
             ),
           ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../data/models/weather_model.dart';
 import '../../data/services/localization_service.dart';
+import '../../providers/weather_provider.dart';
 import 'weather_icon_widget.dart';
 
 class CurrentWeatherWidget extends StatelessWidget {
@@ -28,111 +30,137 @@ class CurrentWeatherWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          // City Name
-          Text(
-            weather.city,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Weather Icon
-          WeatherIconWidget(weatherIcon: weather.weatherIcon),
-          const SizedBox(height: 16),
-          // Current Temperature
-          Text(
-            _formatTemperature(weather.temperature),
-            style: const TextStyle(
-              fontSize: 72,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Description
-          Text(
-            weather.description,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Feels Like
-          Text(
-            '${LocalizationService.translate('feels_like', language)} ${_formatTemperature(weather.feelsLike)}',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Temperature and Humidity Info
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Consumer<WeatherProvider>(
+      builder: (context, weatherProvider, _) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    weather.city,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () async {
+                      await weatherProvider.toggleSaveCity(weather.city);
+                    },
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Icon(
+                        weatherProvider.isCurrentCitySaved
+                            ? Icons.star
+                            : Icons.star_outline,
+                        key: ValueKey(weatherProvider.isCurrentCitySaved),
+                        color: Colors.orange,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              WeatherIconWidget(weatherIcon: weather.weatherIcon),
+              const SizedBox(height: 16),
+              Text(
+                _formatTemperature(weather.temperature),
+                style: const TextStyle(
+                  fontSize: 72,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                weather.description,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${LocalizationService.translate('feels_like', language)} ${_formatTemperature(weather.feelsLike)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
                   children: [
-                    _InfoColumn(
-                      label: LocalizationService.translate('max', language),
-                      value: _formatTemperature(weather.maxTemp),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _InfoColumn(
+                          label:
+                          LocalizationService.translate('max', language),
+                          value: _formatTemperature(weather.maxTemp),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 40,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                        _InfoColumn(
+                          label:
+                          LocalizationService.translate('min', language),
+                          value: _formatTemperature(weather.minTemp),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 40,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                        _InfoColumn(
+                          label: LocalizationService.translate(
+                              'humidity', language),
+                          value: '${weather.humidity}%',
+                        ),
+                      ],
                     ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    _InfoColumn(
-                      label: LocalizationService.translate('min', language),
-                      value: _formatTemperature(weather.minTemp),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    _InfoColumn(
-                      label: LocalizationService.translate('humidity', language),
-                      value: '${weather.humidity}%',
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _InfoColumn(
+                          label:
+                          LocalizationService.translate('wind', language),
+                          value:
+                          '${weather.windSpeed.toStringAsFixed(1)} ${LocalizationService.translate('wind_speed_unit', language)}',
+                        ),
+                        Container(
+                          width: 1,
+                          height: 40,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                        _InfoColumn(
+                          label: LocalizationService.translate(
+                              'pressure', language),
+                          value: '${weather.pressure} hPa',
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _InfoColumn(
-                      label: LocalizationService.translate('wind', language),
-                      value: '${weather.windSpeed.toStringAsFixed(1)} ${LocalizationService.translate('wind_speed_unit', language)}',
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    _InfoColumn(
-                      label: LocalizationService.translate('pressure', language),
-                      value: '${weather.pressure} hPa',
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -154,7 +182,7 @@ class _InfoColumn extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 4),

@@ -75,7 +75,6 @@ class ForecastCardWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Day of Week
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Text(
@@ -87,16 +86,13 @@ class ForecastCardWidget extends StatelessWidget {
               ),
             ),
           ),
-
-          // Weather Icon - MIDDLE
           SizedBox(
             height: 40,
             child: Center(
               child: WeatherIconWidget(weatherIcon: day.weatherIcon),
             ),
           ),
-
-          // Temperature with Change Indicator
+          ///температурний індикатор - зміна по стрілочкам збоку
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -112,8 +108,6 @@ class ForecastCardWidget extends StatelessWidget {
               _buildTemperatureIndicator(),
             ],
           ),
-
-          // Weather Description
           SizedBox(
             height: 28,
             child: Padding(
@@ -132,8 +126,6 @@ class ForecastCardWidget extends StatelessWidget {
               ),
             ),
           ),
-
-          // Humidity
           Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
             child: Row(

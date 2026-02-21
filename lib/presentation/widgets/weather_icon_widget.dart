@@ -14,17 +14,16 @@ class WeatherIconWidget extends StatelessWidget {
   }
 
   Widget _getWeatherIcon(String icon) {
-    // Weather icon codes mapping
     const iconMap = {
-      '01d': Icons.wb_sunny,        // Clear sky
-      '02d': Icons.wb_cloudy,       // Few clouds
-      '03d': Icons.cloud,           // Scattered clouds
-      '04d': Icons.cloud,           // Broken clouds
-      '09d': Icons.grain,           // Shower rain
-      '10d': Icons.cloud_queue,     // Rain
-      '11d': Icons.flash_on,        // Thunderstorm
-      '13d': Icons.ac_unit,         // Snow
-      '50d': Icons.cloud,           // Mist
+      '01d': Icons.wb_sunny,
+      '02d': Icons.wb_cloudy,
+      '03d': Icons.cloud,
+      '04d': Icons.cloud,
+      '09d': Icons.grain,
+      '10d': Icons.cloud_queue,
+      '11d': Icons.flash_on,
+      '13d': Icons.ac_unit,
+      '50d': Icons.cloud,
     };
 
     final iconData = iconMap[icon] ?? Icons.cloud;

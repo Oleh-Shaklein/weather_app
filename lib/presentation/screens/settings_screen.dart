@@ -56,7 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Language Settings
             _buildSettingsCard(
               title: LocalizationService.translate('language', _selectedLanguage),
               child: Column(
@@ -67,8 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Temperature Unit Settings
             _buildSettingsCard(
               title: LocalizationService.translate(
                   'temperature_unit', _selectedLanguage),
@@ -80,10 +77,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       LocalizationService.translate('fahrenheit', _selectedLanguage)),
                 ],
               ),
-            ),
+            ),///крута фіча
             const SizedBox(height: 16),
-
-            // Time Gradient Settings
             _buildSettingsCard(
               title: LocalizationService.translate('time_gradient', _selectedLanguage),
               child: Row(
